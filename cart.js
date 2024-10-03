@@ -1,11 +1,76 @@
+const productData = JSON.parse(localStorage.getItem("cart"));
+const productsContainer = document.querySelector(".products");
+
 updateCartCount();
 
-//ФУНКЦИОНАЛ СОЗДАНИЯ ЭЛЕМЕНТА
-function createProductElement(product) {
+productsContainer.innerHTML = "";
+for (const key in productData) {
+  const product = productData[key];
+  const productElement = document.createElement("div");
+  productElement.className = `product ${product.id}`;
+
+  productElement.innerHTML = `
+                        <div class="product-info">
+                            <ion-icon name="close-circle" class="delete"></ion-icon>
+                            <img src="images/${product.id}.png">
+                            <div class="product-name">${product.name}</div>
+                        </div>
+                        <div class="product_price">$${product.price}</div>
+                        <div class="product_quantity">
+                            <ion-icon class="decrease" name="arrow-dropleft-circle"></ion-icon>
+                            <span>${product.amount}</span>
+                            <ion-icon class="increase" name="arrow-dropright-circle"></ion-icon>
+                        </div>
+                        <div class="product_total">$${
+                          product.price * product.amount
+                        }</div>
+                    `;
+
+  productsContainer.appendChild(productElement);
+
+  productElement.addEventListener("click", (event) =>
+    cartButtons(event, product)
+  );
+
+  productElement.addEventListener("mousedown", (event) => {
+    // Если есть дополнительные нажатия, например, при двойном клике, предотвратим выделение текста
+    if (event.detail > 1) {
+      event.preventDefault();
+    }
+  });
 }
 
+function updateProductQuantity(product) {
+  const span = document.querySelector(`.${product.id} .product_quantity span`);
+  span.textContent = `${product.amount}`;
+}
 
-//СОЗДАНИЕ ФУНКЦИИ ОБНОВЛЕНИЯ КОЛИЧЕСТВА НА КНОПКЕ CART
+function deleteProduct(product) {
+  const deleting = document.querySelector(`.product.${product.id}`);
+  deleting.remove();
+}
+
+function cartButtons(event, product) {
+  if (event.target.classList.contains("delete")) {
+    delete productData[product.id];
+    deleteProduct(product);
+  } else if (event.target.classList.contains("increase")) {
+    productData[product.id].amount += 1;
+    updateProductQuantity(product);
+  } else if (event.target.classList.contains("decrease")) {
+    if (productData[product.id].amount > 1) {
+      productData[product.id].amount -= 1;
+      updateProductQuantity(product);
+    } else {
+      delete productData[product.id];
+      deleteProduct(product);
+    }
+  }
+
+  localStorage.setItem("cart", JSON.stringify(productData));
+  updateCartCount();
+}
+
 function updateCartCount() {
   const cart = JSON.parse(localStorage.getItem("cart")) || {};
   let itemCount = 0;
@@ -14,48 +79,5 @@ function updateCartCount() {
     itemCount += cart[key].amount;
   }
 
-  document.querySelector("#amount").textContent = itemCount;
-}
-
-
-
-//функция для создания(добавления) элементов на страницу из localStorage
-
-
-function createProductElement(product) {
-  const productsContainer = document.querySelector(".products");
-
-  const productElement = document.createElement("div");
-  productElement.classList.add("product-item");
-
-  const productName = document.createElement("h3"); 
-  productName.textContent = product.name;
-
-
-  const productPrice = document.createElement("h3");
-  productPrice.textContent = product.price;
-
-  const productImage = document.createElement("img");
-  productImage.src = localStorage.getItem("товары/${product.id}.png");
-
-  productElement.appendChild(productName);
-  productElement.appendChild(productPrice);
-  productElement.appendChild(productImage);
-
-  productsContainer.appendChild(productElement);
-}
-
-
-
-
-
-const storedData = localStorage.getItem("cart") || {};
-const productData = JSON.parse(storedData);
-
-//отображение элементов на странице
-
-
-for (const key in productData) {
-  const product = productData[key];
-  createProductElement(product);
+  document.querySelector(".cart span").textContent = itemCount;
 }
